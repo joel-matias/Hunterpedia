@@ -20,20 +20,23 @@ const bangers = Bangers({
 });
 
 export const metadata: Metadata = {
-  title: "hunterpedia",
-  description: "Hunterpedia: información de personajes de hunter x hunter",
+  title: "Hunterpedia",
+  description: "Hunterpedia: información de personajes de Hunter × Hunter",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} antialiased bg-(--color-fondo)`}>
         <main className="min-h-screen bg-(--color-fondo)">
-          <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
-            <div className="w-full px-6 md:px-12 py-4 flex items-center justify-center">
-              <Link href="/" className="text-4xl md:text-5xl font-bangers tracking-wider text-(--color-boton)">
+          <header className="sticky top-0 z-40 w-full bg-black/70 backdrop-blur-md border-b border-white/8">
+            <div className="w-full px-6 md:px-12 py-4 flex flex-col items-center justify-center gap-0.5">
+              <Link href="/" className="text-4xl md:text-5xl font-bangers tracking-widest text-(--color-boton) hover:opacity-80 transition-opacity">
                 Hunterpedia
               </Link>
+              <p className="text-[10px] md:text-xs tracking-[0.3em] text-white/30 uppercase font-sans">
+                Hunter × Hunter — Enciclopedia
+              </p>
             </div>
           </header>
 
