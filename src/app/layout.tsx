@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Bangers } from "next/font/google";
+import { Geist, Bangers } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
@@ -27,8 +22,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${bangers.variable} antialiased bg-(--color-fondo)`}>
-        <main className="min-h-screen bg-(--color-fondo)">
+      <body className={`${geistSans.variable} ${bangers.variable} antialiased bg-(--color-fondo)`}>
+        <main className="min-h-screen">
           <header className="sticky top-0 z-40 w-full bg-black/70 backdrop-blur-md border-b border-white/8">
             <div className="w-full px-6 md:px-12 py-4 flex flex-col items-center justify-center gap-0.5">
               <Link href="/" className="text-4xl md:text-5xl font-bangers tracking-widest text-(--color-boton) hover:opacity-80 transition-opacity">
