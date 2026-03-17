@@ -58,7 +58,7 @@ export default async function CharacterPage(props: characterProps) {
         </Link>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8 flex flex-col sm:flex-row gap-8 md:gap-12 items-start">
+      <div className="max-w-6xl mx-auto px-6 md:px-12 py-8 grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,20rem)] gap-8 md:gap-12 items-start">
         <div className="shrink-0 w-48 sm:w-56 md:w-64 lg:w-72 mx-auto sm:mx-0">
           <div className="relative aspect-2/3 rounded-2xl overflow-hidden border border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
             <Image
@@ -70,7 +70,7 @@ export default async function CharacterPage(props: characterProps) {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-end pt-2">
+        <div className="flex-1 flex flex-col justify-end pt-2 min-w-0">
           <p className="text-xs tracking-[0.25em] uppercase text-(--color-boton) opacity-60 mb-3 font-sans">
             Hunter × Hunter
           </p>
@@ -120,30 +120,31 @@ export default async function CharacterPage(props: characterProps) {
             </div>
           )}
 
-          {animeAppearances.length > 0 && (
-            <div className="mt-7">
-              <SectionTitle>Apariciones</SectionTitle>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-sm">
-                {animeAppearances.map((a) => (
-                  <div key={a.anime.mal_id} className="flex items-center gap-2.5 p-2 rounded-lg bg-black/15 border border-white/5">
-                    <div className="relative w-8 h-11 shrink-0 rounded overflow-hidden">
-                      <Image
-                        src={a.anime.images.webp.image_url}
-                        alt={a.anime.title}
-                        fill sizes="32px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-white/75 leading-snug truncate">{a.anime.title}</p>
-                      <p className="text-[10px] mt-0.5 text-white/30">{a.role}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+
+        {animeAppearances.length > 0 && (
+          <div className="min-w-0 pt-2">
+            <SectionTitle>Apariciones</SectionTitle>
+            <div className="mt-3 grid grid-cols-1 gap-2">
+              {animeAppearances.map((a) => (
+                <div key={a.anime.mal_id} className="flex items-center gap-2.5 p-2 rounded-lg bg-black/15 border border-white/5">
+                  <div className="relative w-8 h-11 shrink-0 rounded overflow-hidden">
+                    <Image
+                      src={a.anime.images.webp.image_url}
+                      alt={a.anime.title}
+                      fill sizes="32px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-white/75 leading-snug truncate">{a.anime.title}</p>
+                    <p className="text-[10px] mt-0.5 text-white/30">{a.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {char.about && (
