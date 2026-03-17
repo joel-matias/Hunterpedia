@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 interface characterProps {
   params: { character_id: string }
@@ -33,22 +34,36 @@ type AnimeAppearance = {
   };
 };
 
+const langLabel: Record<string, string> = {
+  Japanese: "JP", English: "EN", French: "FR",
+  Spanish: "ES", German: "DE", Italian: "IT",
+  Portuguese: "PT", Korean: "KO",
+};
+
 export default async function CharacterPage(props: characterProps) {
   const { character_id } = await props.params;
 
+  const fetchOpts = { next: { revalidate: 3600 } };
   const [charRes, voicesRes, animeRes] = await Promise.all([
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}`),
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}/voices`),
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}/anime`),
+    fetch(`https://api.jikan.moe/v4/characters/${character_id}`, fetchOpts),
+    fetch(`https://api.jikan.moe/v4/characters/${character_id}/voices`, fetchOpts),
+    fetch(`https://api.jikan.moe/v4/characters/${character_id}/anime`, fetchOpts),
   ]);
+
+  if (!charRes.ok) notFound();
 
   const char: CharacterDetail = (await charRes.json()).data;
   const voices: VoiceActor[] = (await voicesRes.json()).data ?? [];
   const animeAppearances: AnimeAppearance[] = (await animeRes.json()).data ?? [];
 
-  const jaVoice = voices.find((v) => v.language === "Japanese");
-  const enVoice = voices.find((v) => v.language === "English");
-  const otherVoices = voices.filter((v) => v.language !== "Japanese" && v.language !== "English");
+  let jaVoice: VoiceActor | undefined;
+  let enVoice: VoiceActor | undefined;
+  const otherVoices: VoiceActor[] = [];
+  for (const v of voices) {
+    if (v.language === "Japanese") jaVoice = v;
+    else if (v.language === "English") enVoice = v;
+    else otherVoices.push(v);
+  }
 
   return (
     <div className="min-h-[calc(100vh-84px)] bg-(--color-contenedor)">
@@ -59,7 +74,7 @@ export default async function CharacterPage(props: characterProps) {
       </div>
 
       <div className="max-w-6xl mx-auto px-6 md:px-12 py-8 grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,20rem)] gap-8 md:gap-12 items-start">
-        <div className="shrink-0 w-48 sm:w-56 md:w-64 lg:w-72 mx-auto sm:mx-0">
+        <div className="w-48 sm:w-56 md:w-64 lg:w-72 mx-auto sm:mx-0">
           <div className="relative aspect-2/3 rounded-2xl overflow-hidden border border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.6)]">
             <Image
               src={char.images.webp.image_url}
@@ -70,7 +85,7 @@ export default async function CharacterPage(props: characterProps) {
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-end pt-2 min-w-0">
+        <div className="flex flex-col justify-end pt-2 min-w-0">
           <p className="text-xs tracking-[0.25em] uppercase text-(--color-boton) opacity-60 mb-3 font-sans">
             Hunter × Hunter
           </p>
@@ -119,7 +134,6 @@ export default async function CharacterPage(props: characterProps) {
               </div>
             </div>
           )}
-
         </div>
 
         {animeAppearances.length > 0 && (
@@ -152,8 +166,8 @@ export default async function CharacterPage(props: characterProps) {
           <div className="max-w-6xl mx-auto px-6 md:px-12 py-10">
             <SectionTitle>Biografía</SectionTitle>
             <div className="mt-5 max-w-3xl space-y-4">
-              {char.about.split(/\n{2,}/).map((paragraph, i) => (
-                <p key={i} className="leading-7 text-sm md:text-base text-white/75">
+              {char.about.split(/\n{2,}/).map((paragraph) => (
+                <p key={paragraph.slice(0, 40)} className="leading-7 text-sm md:text-base text-white/75">
                   {paragraph.trim()}
                 </p>
               ))}
@@ -175,12 +189,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function VoiceActorCard({ va }: { va: VoiceActor }) {
-  const langLabel: Record<string, string> = {
-    Japanese: "JP", English: "EN", French: "FR",
-    Spanish: "ES", German: "DE", Italian: "IT",
-    Portuguese: "PT", Korean: "KO",
-  };
-
   return (
     <div className="flex items-center gap-3 p-2.5 rounded-lg bg-black/15 border border-white/5">
       <div className="relative w-9 h-9 shrink-0 rounded-full overflow-hidden bg-white/5">
