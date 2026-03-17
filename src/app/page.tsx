@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+export const revalidate = 3600;
+
 type CharacterResponse = {
   data: {
     character: {
@@ -22,11 +24,27 @@ type CharacterResponse = {
 
 type CharacterItem = CharacterResponse["data"][number];
 
+async function getCharacters(): Promise<CharacterItem[]> {
+  try {
+    const res = await fetch("https://api.jikan.moe/v4/anime/11061/characters", {
+      next: { revalidate: 3600 },
+    });
+
+    if (!res.ok) {
+      console.error("Jikan returned a non-OK response for home page:", res.status);
+      return [];
+    }
+
+    const { data }: CharacterResponse = await res.json();
+    return data ?? [];
+  } catch (error) {
+    console.error("Failed to fetch characters for home page:", error);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const res = await fetch(`https://api.jikan.moe/v4/anime/11061/characters`, {
-    next: { revalidate: 3600 },
-  });
-  const { data }: CharacterResponse = await res.json();
+  const data = await getCharacters();
 
   const mainChars: CharacterItem[] = [];
   const supportingChars: CharacterItem[] = [];
@@ -37,6 +55,11 @@ export default async function Home() {
 
   return (
     <div className="px-6 md:px-12 py-10 space-y-12">
+      {data.length === 0 && (
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+          No se pudieron cargar los personajes en este momento. Intenta de nuevo en unos minutos.
+        </div>
+      )}
       <CharacterSection title="Personajes Principales" characters={mainChars} />
       <CharacterSection title="Personajes Secundarios" characters={supportingChars} />
     </div>

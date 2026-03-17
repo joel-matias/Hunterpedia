@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
+export const revalidate = 3600;
+
 interface characterProps {
   params: { character_id: string }
 }
@@ -41,11 +43,33 @@ const langLabel: Record<string, string> = {
   Portuguese: "PT", Korean: "KO",
 };
 
+async function fetchJikan<T>(url: string): Promise<T | null> {
+  try {
+    const res = await fetch(url, { next: { revalidate: 3600 } });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const json = await res.json();
+    return (json.data ?? null) as T | null;
+  } catch (error) {
+    console.error(`Failed to fetch Jikan resource: ${url}`, error);
+    return null;
+  }
+}
+
 export async function generateMetadata(props: characterProps): Promise<Metadata> {
   const { character_id } = await props.params;
-  const res = await fetch(`https://api.jikan.moe/v4/characters/${character_id}`, { next: { revalidate: 3600 } });
-  if (!res.ok) return { title: "Personaje | Hunterpedia" };
-  const char: CharacterDetail = (await res.json()).data;
+  const char = await fetchJikan<CharacterDetail>(`https://api.jikan.moe/v4/characters/${character_id}`);
+
+  if (!char) {
+    return {
+      title: "Personaje | Hunterpedia",
+      description: "Información de personajes de Hunter x Hunter en Hunterpedia.",
+    };
+  }
+
   const description = char.about?.split("\n")[0]?.slice(0, 155) ?? `Información sobre ${char.name} en Hunter × Hunter.`;
   return {
     title: `${char.name} | Hunterpedia`,
@@ -61,23 +85,18 @@ export async function generateMetadata(props: characterProps): Promise<Metadata>
 export default async function CharacterPage(props: characterProps) {
   const { character_id } = await props.params;
 
-  const fetchOpts = { next: { revalidate: 3600 } };
-  const [charRes, voicesRes, animeRes] = await Promise.all([
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}`, fetchOpts),
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}/voices`, fetchOpts),
-    fetch(`https://api.jikan.moe/v4/characters/${character_id}/anime`, fetchOpts),
+  const [char, voices, animeAppearances] = await Promise.all([
+    fetchJikan<CharacterDetail>(`https://api.jikan.moe/v4/characters/${character_id}`),
+    fetchJikan<VoiceActor[]>(`https://api.jikan.moe/v4/characters/${character_id}/voices`),
+    fetchJikan<AnimeAppearance[]>(`https://api.jikan.moe/v4/characters/${character_id}/anime`),
   ]);
 
-  if (!charRes.ok) notFound();
-
-  const char: CharacterDetail = (await charRes.json()).data;
-  const voices: VoiceActor[] = (await voicesRes.json()).data ?? [];
-  const animeAppearances: AnimeAppearance[] = (await animeRes.json()).data ?? [];
+  if (!char) notFound();
 
   let jaVoice: VoiceActor | undefined;
   let enVoice: VoiceActor | undefined;
   const otherVoices: VoiceActor[] = [];
-  for (const v of voices) {
+  for (const v of voices ?? []) {
     if (v.language === "Japanese") jaVoice = v;
     else if (v.language === "English") enVoice = v;
     else otherVoices.push(v);
@@ -154,11 +173,11 @@ export default async function CharacterPage(props: characterProps) {
           )}
         </div>
 
-        {animeAppearances.length > 0 && (
+        {(animeAppearances?.length ?? 0) > 0 && (
           <div className="min-w-0 pt-2">
             <SectionTitle>Apariciones</SectionTitle>
             <div className="mt-3 grid grid-cols-1 gap-2">
-              {animeAppearances.map((a) => (
+              {animeAppearances!.map((a) => (
                 <div key={a.anime.mal_id} className="flex items-center gap-2.5 p-2 rounded-lg bg-black/15 border border-white/5">
                   <div className="relative w-8 h-11 shrink-0 rounded overflow-hidden">
                     <Image
