@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
 interface characterProps {
   params: { character_id: string }
@@ -39,6 +40,23 @@ const langLabel: Record<string, string> = {
   Spanish: "ES", German: "DE", Italian: "IT",
   Portuguese: "PT", Korean: "KO",
 };
+
+export async function generateMetadata(props: characterProps): Promise<Metadata> {
+  const { character_id } = await props.params;
+  const res = await fetch(`https://api.jikan.moe/v4/characters/${character_id}`, { next: { revalidate: 3600 } });
+  if (!res.ok) return { title: "Personaje | Hunterpedia" };
+  const char: CharacterDetail = (await res.json()).data;
+  const description = char.about?.split("\n")[0]?.slice(0, 155) ?? `Información sobre ${char.name} en Hunter × Hunter.`;
+  return {
+    title: `${char.name} | Hunterpedia`,
+    description,
+    openGraph: {
+      title: `${char.name} | Hunterpedia`,
+      description,
+      images: [{ url: char.images.jpg.image_url }],
+    },
+  };
+}
 
 export default async function CharacterPage(props: characterProps) {
   const { character_id } = await props.params;
